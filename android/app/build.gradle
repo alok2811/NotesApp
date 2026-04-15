@@ -55,6 +55,10 @@ react {
     autolinkLibrariesWithApp()
 }
 
+project.ext.react = [
+    enableHermes: true
+]
+
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
@@ -111,6 +115,13 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // ✅ ADD THIS BLOCK
+    debugImplementation("com.facebook.flipper:flipper:0.182.0")
+    debugImplementation("com.facebook.flipper:flipper-network-plugin:0.182.0") {
+        exclude group:'com.squareup.okhttp3', module:'okhttp'
+    }
+    debugImplementation("com.facebook.flipper:flipper-fresco-plugin:0.182.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

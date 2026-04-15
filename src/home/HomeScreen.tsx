@@ -1,9 +1,8 @@
 import { StyleSheet,View, Modal, Pressable, FlatList } from 'react-native';
 import React, {useState} from 'react';
-import { AnimatedFAB, TextInput, Appbar, Text } from 'react-native-paper';
+import { AnimatedFAB, TextInput, Appbar, Text, HelperText } from 'react-native-paper';
 import NotesCard from './components/NotesCard';
 import NoData from '../widgets/NoData';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
 
 
 const HomeScreen = () => {
@@ -11,17 +10,61 @@ const HomeScreen = () => {
   const [visible, setVisible] = useState(false);
   const [notes, setNotes] = useState<NotesInterface[]>([]);
   const [noteTitle, setNoteTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [contentError, setContentError] = useState('');
   const [noteContent, setNoteContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
-  const showDialog = () => setVisible(true);
+  const showDialog = () => {
+    setEditingNoteId(null);
+    setVisible(true);
+  };
 
-  const hideDialog = () => setVisible(false);
-
-  const saveNotes = (newNote: NotesInterface) => {
-    notes.push(newNote);
-    setNotes(notes);
+  const hideDialog = () => {
+    
+    setVisible(false);
+    setTitleError('');
+    setContentError('');
     setNoteTitle('');
     setNoteContent('');
+    setEditingNoteId(null);
+  };
+
+  const saveNotes = () => {
+
+    if (noteTitle.trim().length <= 0 || noteContent.trim().length <= 0) {
+      if (!noteTitle.trim()) {
+        setTitleError('Title is required');
+      } else {
+        setTitleError('');
+      }
+
+      if (!noteContent.trim()) {
+        setContentError('Content is required');
+      } else {
+        setContentError('');
+      }
+      return;
+    }
+
+    if (editingNoteId) {
+      setNotes((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === editingNoteId
+            ? { ...note, title: noteTitle, content: noteContent }
+            : note
+        )
+      );
+    } else {
+      const newNote: NotesInterface = {
+        id: generateRandomString(11),
+        title: noteTitle,
+        content: noteContent,
+        dateTime: Date.now().toString(),
+      };
+      setNotes((prevNotes) => [...prevNotes, newNote]);
+    }
+
     hideDialog();
   };
 
@@ -42,6 +85,13 @@ const handleDeleteItem = (item: NotesInterface) => {
     setNotes(updatedData);
   };
 
+  const handelEditItem = (item: NotesInterface) => {
+    setEditingNoteId(item.id);
+    setNoteTitle(item.title);
+    setNoteContent(item.content);
+    setVisible(true);
+  };
+
   return (
     <View style={styles.main}>
       <Appbar.Header mode='small'>
@@ -53,7 +103,13 @@ const handleDeleteItem = (item: NotesInterface) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           
-          <NotesCard item={item} onDelete={handleDeleteItem} title={item.title} content={item.content} dateTime={item.dateTime} />
+          <NotesCard 
+          item={item} 
+          onEdit={handelEditItem}
+          onDelete={handleDeleteItem} 
+          title={item.title} 
+          content={item.content} 
+          dateTime={item.dateTime} />
         )}
        ListEmptyComponent={<NoData />}
        showsVerticalScrollIndicator={false}
@@ -64,40 +120,64 @@ const handleDeleteItem = (item: NotesInterface) => {
   visible={visible}
   transparent
   animationType="fade"
-  onRequestClose={() => setVisible(false)}
+  onRequestClose={hideDialog}
 >
   <View style={styles.overlay}>
     <View style={styles.modalCard}>
-      <Text style={styles.modalTitle}>Add Note</Text>
+      <Text style={styles.modalTitle}>{editingNoteId ? 'Edit Note' : 'Add Note'}</Text>
        <TextInput
       mode="outlined"
-      onChangeText={text => setNoteTitle(text)}
+      onChangeText={(text) => {
+        setTitleError('');
+        setNoteTitle(text)}}
       value={noteTitle}
       label="Note Title"
       placeholder="Type something..."
+      onBlur={() => {
+        if (!noteTitle.trim()) {
+          setTitleError('Title is required');
+        } else {
+          setTitleError('');
+        }
+      }}
+    
     />
-    <View style={{ height: 10 }} />
+     <HelperText type="error" visible={titleError.trim().length > 0}>
+     {titleError}
+      </HelperText>
+  
      <TextInput
       mode="outlined"
       label="Note Content"
-      onChangeText={text => setNoteContent(text)}
+      onChangeText={(text) => {
+        setContentError('');
+        setNoteContent(text)}}
       value={noteContent}
       multiline={true}
       numberOfLines={4}
        style={{ minHeight: 120 }}
-  contentStyle={{ textAlignVertical: 'top' }}
+      contentStyle={{ textAlignVertical: 'top' }}
       placeholder="Type something..."
+      onBlur={() => {
+        if (!noteContent.trim()) {
+          setContentError('Content is required');
+        } else {
+          setContentError('');
+        }
+      }}
+  
     />
-    <View style={{ height: 10 }} />
+    <HelperText type="error" visible={contentError.trim().length > 0}>
+    {contentError}
+      </HelperText>
+ 
 <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-
-      
       <Pressable style={styles.modalActions} onPress={() => hideDialog()}>
         <Text>Cancel</Text>
       </Pressable>
       <View style={{ width: 10 }} />
-      <Pressable style={styles.modalActions} onPress={() => saveNotes({ id:  generateRandomString(11), title: noteTitle, content: noteContent, dateTime: Date.now().toString() } )}>
-        <Text>Save</Text>
+      <Pressable style={styles.modalActions} onPress={saveNotes}>
+        <Text>{editingNoteId ? 'Update' : 'Save'}</Text>
       </Pressable>
 </View>
       

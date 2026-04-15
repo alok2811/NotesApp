@@ -2,22 +2,23 @@ import {
     StyleSheet,
     Text,
     PanResponder,
-    TouchableOpacity,
     Animated,
-    View
+    View,
+    Alert
 } from 'react-native'
 import React, { useRef } from 'react'
 import { Card, IconButton } from 'react-native-paper';
 
 
 const NotesCard = ({
-    title, content, dateTime, onDelete, item
+    title, content, dateTime, onDelete, item, onEdit
 }: {
     item: NotesInterface;
     title?: string;
     content?: string;
     dateTime?: string;
     onDelete: (item: NotesInterface) => void;
+    onEdit: (item: NotesInterface) => void;
 }) => {
 
 
@@ -34,7 +35,7 @@ const NotesCard = ({
             onPanResponderRelease: (_, gestureState) => {
                 if (gestureState.dx < -50) {
                     Animated.spring(translateX, {
-                        toValue: -100,
+                        toValue: -140,
                         useNativeDriver: true,
                     }).start();
                 } else {
@@ -47,11 +48,58 @@ const NotesCard = ({
         })
     ).current;
 
+    const closeSwipe = () => {
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      };
+      
+      const handleEditPress = () => {
+        closeSwipe();
+        // Slight delay so card visibly closes before modal opens (optional)
+        setTimeout(() => onEdit(item), 120);
+      };
+      
+      const handleDeletePress = () => {
+        Alert.alert(
+          'Delete Note',
+          'Are you sure you want to delete this note?',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: closeSwipe },
+            {
+              text: 'Delete',
+              style: 'destructive',
+              onPress: () => {
+                closeSwipe();
+                onDelete(item);
+              },
+            },
+          ],
+          { cancelable: true }
+        );
+      };
+
     return (
-        <View>
+        <View style={styles.wrapper}>
+            <View style={styles.actionsContainer}>
+                <IconButton
+                    style={styles.editButton}
+                    icon="pencil"
+                    iconColor="white"
+                    size={20}
+                    onPress={() => onEdit(item)}
+                />
+                <IconButton
+                    style={styles.deleteButton}
+                    icon="delete"
+                    iconColor="white"
+                    size={20}
+                    onPress={() => onDelete(item)}
+                />
+            </View>
             <Animated.View
                 style={{
-                    flex: 1,
                     transform: [{ translateX: translateX }],
                 }}
             >
@@ -63,16 +111,7 @@ const NotesCard = ({
                         </Card.Content>
                     </Card>
                 </View>
-
-               <IconButton
-                style={styles.deleteButton}
-                icon="delete"
-                size={20}
-                onPress={() => onDelete(item)}>
-              </IconButton>
-
             </Animated.View>
-
         </View>
 
 
@@ -82,10 +121,24 @@ const NotesCard = ({
 export default NotesCard
 
 const styles = StyleSheet.create({
+    wrapper: {
+        marginHorizontal: 10,
+        marginVertical: 6,
+        position: 'relative',
+    },
+    actionsContainer: {
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: 140,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-evenly',
+    },
     card: {
         backgroundColor: 'white',
         padding: 10,
-        margin: 10,
         borderRadius: 8,
         elevation: 3,
     },
@@ -111,13 +164,11 @@ const styles = StyleSheet.create({
     itemContainer: {
         flexDirection: "row",
     },
+    editButton: {
+        backgroundColor: '#1976d2',
+    },
     deleteButton: {
-        width: 100,
-        height: 100,
-        justifyContent: "center",
-        alignItems: "center",
-        position: "absolute",
-        right: -100,
+        backgroundColor: '#d32f2f',
     },
     deleteButtonText: {
         color: "white",
