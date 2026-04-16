@@ -10,6 +10,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import SplashScreen from './src/splash/SplashScreen';
 import HomeScreen from './src/home/HomeScreen';
 import { NavigationContainer } from '@react-navigation/native';
+import { useEffect } from 'react';
 import {
   navigationRef,
   type RootStackParamList,
@@ -20,13 +21,17 @@ import { Appearance } from 'react-native';
 const Stack = createStackNavigator<RootStackParamList>();
 
 function App() {
- 
-// Force light mode
-Appearance.setColorScheme('light');
+  useEffect(() => {
+    // Force light mode once on app mount
+    Appearance.setColorScheme('light');
+  }, []);
+
   return (
-    <PaperProvider>
-      <AppContent />
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider>
+        <AppContent />
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -37,7 +42,6 @@ export default App;
 
 function AppContent() {
   return (
-    <SafeAreaProvider>
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName="Splash"
@@ -49,6 +53,5 @@ function AppContent() {
         <Stack.Screen name="Home" component={HomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>
-    </SafeAreaProvider>
   );
 }

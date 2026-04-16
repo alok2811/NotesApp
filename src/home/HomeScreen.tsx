@@ -1,9 +1,10 @@
 import { StyleSheet,View, Modal, Pressable, FlatList } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { AnimatedFAB, TextInput, Appbar, Text, HelperText } from 'react-native-paper';
 import NotesCard from './components/NotesCard';
 import NoData from '../widgets/NoData';
 
+const API_BASE_URL = 'http://11.11.10.45:3000/notes';
 
 const HomeScreen = () => {
 
@@ -20,6 +21,10 @@ const HomeScreen = () => {
     setVisible(true);
   };
 
+  useEffect(() => {
+    getNotes();
+  }, []);
+
   const hideDialog = () => {
     
     setVisible(false);
@@ -30,7 +35,7 @@ const HomeScreen = () => {
     setEditingNoteId(null);
   };
 
-  const saveNotes = () => {
+  const saveNotes = async () => {
 
     if (noteTitle.trim().length <= 0 || noteContent.trim().length <= 0) {
       if (!noteTitle.trim()) {
@@ -48,24 +53,80 @@ const HomeScreen = () => {
     }
 
     if (editingNoteId) {
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note.id === editingNoteId
-            ? { ...note, title: noteTitle, content: noteContent }
-            : note
-        )
-      );
+      await updateNotes({
+        id: editingNoteId,
+        title: noteTitle,
+        content: noteContent,
+        dateTime: Date.now().toString(),
+      });
     } else {
-      const newNote: NotesInterface = {
+      await newNotes({
         id: generateRandomString(11),
         title: noteTitle,
         content: noteContent,
         dateTime: Date.now().toString(),
-      };
-      setNotes((prevNotes) => [...prevNotes, newNote]);
+      });
     }
 
     hideDialog();
+  };
+
+  const getNotes = async () => {
+    try {
+      const result = await fetch(API_BASE_URL);
+      const data: NotesInterface[] = await result.json();
+      setNotes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch notes', error);
+    }
+  };
+
+  const newNotes = async (note: NotesInterface) => {
+    try {
+      await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(note),
+    });
+      await getNotes();
+    } catch (error) {
+      console.error('Failed to create note', error);
+    }
+  };
+
+  const deleteNotes = async (id: string) => {
+    try {
+      await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
+      await getNotes();
+    } catch (error) {
+      console.error('Failed to delete note', error);
+    }
+  };
+
+  const updateNotes = async (note: NotesInterface) => {
+    try {
+      await fetch(`${API_BASE_URL}/${note.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(note),
+    });
+      await getNotes();
+    } catch (error) {
+      console.error('Failed to update note', error);
+    }
+  };
+
+  const handleEditItem = (item: NotesInterface) => {
+    setEditingNoteId(item.id);
+    setNoteTitle(item.title);
+    setNoteContent(item.content);
+    setVisible(true);
   };
 
   function generateRandomString(length: number): string {
@@ -80,17 +141,6 @@ const HomeScreen = () => {
   return result;
 }
 
-const handleDeleteItem = (item: NotesInterface) => {
-    const updatedData = notes.filter((note) => note.id !== item.id);
-    setNotes(updatedData);
-  };
-
-  const handelEditItem = (item: NotesInterface) => {
-    setEditingNoteId(item.id);
-    setNoteTitle(item.title);
-    setNoteContent(item.content);
-    setVisible(true);
-  };
 
   return (
     <View style={styles.main}>
@@ -105,8 +155,8 @@ const handleDeleteItem = (item: NotesInterface) => {
           
           <NotesCard 
           item={item} 
-          onEdit={handelEditItem}
-          onDelete={handleDeleteItem} 
+          onEdit={handleEditItem}
+          onDelete={(item)=>deleteNotes(item.id)} 
           title={item.title} 
           content={item.content} 
           dateTime={item.dateTime} />
@@ -177,7 +227,7 @@ const handleDeleteItem = (item: NotesInterface) => {
       </Pressable>
       <View style={{ width: 10 }} />
       <Pressable style={styles.modalActions} onPress={saveNotes}>
-        <Text>{editingNoteId ? 'Update' : 'Save'}</Text>
+        <Text>{editingNoteId ? 'Update' : 'Add'}</Text>
       </Pressable>
 </View>
       
