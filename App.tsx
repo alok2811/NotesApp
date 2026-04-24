@@ -5,12 +5,12 @@
  * @format
  */
 
+import { useEffect } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import { createStackNavigator } from '@react-navigation/stack';
-import SplashScreen from './src/splash/SplashScreen';
-import HomeScreen from './src/home/HomeScreen';
+import SplashScreen from './src/presentation/screens/splash/SplashScreen';
+import HomeScreen from './src/presentation/screens/home/HomeScreen';
 import { NavigationContainer } from '@react-navigation/native';
-import { useEffect } from 'react';
 import {
   navigationRef,
   type RootStackParamList,
@@ -35,11 +35,6 @@ function App() {
   );
 }
 
-
-
-export default App;
-
-
 function AppContent() {
   return (
     <NavigationContainer ref={navigationRef}>
@@ -49,9 +44,11 @@ function AppContent() {
           headerShown: false,
         }}
       >
-        <Stack.Screen name="Splash" component={SplashScreen}/>
+        <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
+
+export default App;

@@ -1,28 +1,24 @@
-import {
-    StyleSheet,
-    Text,
-    PanResponder,
-    Animated,
-    View,
-    Alert
-} from 'react-native'
-import React, { useRef } from 'react'
+import { StyleSheet, Text, PanResponder, Animated, View, Alert } from 'react-native';
+import React, { useRef } from 'react';
 import { Card, IconButton } from 'react-native-paper';
+import { NoteEntity } from '../../domain/entities/NoteEntity';
 
-
-const NotesCard = ({
-    title, content, dateTime, onDelete, item, onEdit
+/**
+ * NotesCard Component handles the presentation of a single note.
+ * Includes a swipe-to-edit-and-delete functionality.
+ */
+export const NotesCard = ({
+    item,
+    onDelete,
+    onEdit
 }: {
-    item: NotesInterface;
-    title?: string;
-    content?: string;
-    dateTime?: string;
-    onDelete: (item: NotesInterface) => void;
-    onEdit: (item: NotesInterface) => void;
+    item: NoteEntity;
+    onDelete: (item: NoteEntity) => void;
+    onEdit: (item: NoteEntity) => void;
 }) => {
-
-
     const translateX = useRef(new Animated.Value(0)).current;
+    
+    // Pan Responder handles the swipe gesture for the item
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
@@ -53,15 +49,9 @@ const NotesCard = ({
           toValue: 0,
           useNativeDriver: true,
         }).start();
-      };
+    };
       
-      const handleEditPress = () => {
-        closeSwipe();
-        // Slight delay so card visibly closes before modal opens (optional)
-        setTimeout(() => onEdit(item), 120);
-      };
-      
-      const handleDeletePress = () => {
+    const handleDeletePress = () => {
         Alert.alert(
           'Delete Note',
           'Are you sure you want to delete this note?',
@@ -78,7 +68,7 @@ const NotesCard = ({
           ],
           { cancelable: true }
         );
-      };
+    };
 
     return (
         <View style={styles.wrapper}>
@@ -95,7 +85,7 @@ const NotesCard = ({
                     icon="delete"
                     iconColor="white"
                     size={20}
-                    onPress={() => onDelete(item)}
+                    onPress={handleDeletePress}
                 />
             </View>
             <Animated.View
@@ -105,20 +95,16 @@ const NotesCard = ({
             >
                 <View {...panResponder.panHandlers}>
                     <Card style={styles.card}>
-                        <Card.Title title={title} titleStyle={styles.titleStyle} />
+                        <Card.Title title={item.title} titleStyle={styles.titleStyle} />
                         <Card.Content>
-                            <Text style={styles.contentStyle}>{content}</Text>
+                            <Text style={styles.contentStyle}>{item.content}</Text>
                         </Card.Content>
                     </Card>
                 </View>
             </Animated.View>
         </View>
-
-
-    )
-}
-
-export default NotesCard
+    );
+};
 
 const styles = StyleSheet.create({
     wrapper: {
@@ -147,22 +133,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-    subtitleStyle: {
-        color: 'gray',
-        fontSize: 14,
-    },
     contentStyle: {
         color: 'black',
         fontSize: 14,
-    },
-    item: {
-        flex: 1,
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: "#ccc",
-    },
-    itemContainer: {
-        flexDirection: "row",
     },
     editButton: {
         backgroundColor: '#1976d2',
@@ -170,8 +143,4 @@ const styles = StyleSheet.create({
     deleteButton: {
         backgroundColor: '#d32f2f',
     },
-    deleteButtonText: {
-        color: "white",
-        fontWeight: "bold",
-    },
-})
+});
